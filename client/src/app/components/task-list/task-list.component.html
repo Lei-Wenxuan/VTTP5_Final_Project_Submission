@@ -1,0 +1,281 @@
+<p-toolbar styleClass="mb-6">
+  <ng-template #start>
+    <p-button
+      label="New"
+      icon="pi pi-plus"
+      severity="secondary"
+      class="mr-2"
+      (onClick)="createNewTask()"
+    />
+    <p-button
+      label="Complete"
+      icon="pi pi-check-circle"
+      severity="success"
+      class="mr-2"
+      outlined
+      (onClick)="updateSelectedTasks()"
+      [disabled]="!selectedTasks || !selectedTasks.length"
+    />
+    <p-button
+      label="Delete"
+      icon="pi pi-trash"
+      severity="danger"
+      class="mr-2"
+      outlined
+      (onClick)="deleteSelectedTasks()"
+      [disabled]="!selectedTasks || !selectedTasks.length"
+    />
+  </ng-template>
+
+  <ng-template #end>
+    <p-button
+      label="Export"
+      icon="pi pi-upload"
+      severity="secondary"
+      (onClick)="exportCSV()"
+    />
+  </ng-template>
+</p-toolbar>
+
+<p-table
+  #dt
+  [value]="allTasks"
+  [rows]="10"
+  [columns]="cols"
+  [paginator]="true"
+  [globalFilterFields]="['title', 'tags', 'body']"
+  [tableStyle]="{ 'min-width': '75rem' }"
+  [(selection)]="selectedTasks"
+  [rowHover]="true"
+  dataKey="id"
+  currentPageReportTemplate="Showing {first} to {last} of {totalRecords} tasks"
+  [showCurrentPageReport]="true"
+  [rowsPerPageOptions]="[10, 20, 30]"
+>
+  <ng-template #caption>
+    <div class="flex items-center justify-between">
+      <h5 class="m-0">Manage Tasks</h5>
+      <button
+        pButton
+        label="Clear"
+        class="p-button-outlined mb-2"
+        icon="pi pi-filter-slash"
+      ></button>
+      <p-iconfield>
+        <p-inputicon styleClass="pi pi-search" />
+        <input
+          pInputText
+          type="text"
+          (input)="onGlobalFilter(dt, $event)"
+          placeholder="Search..."
+        />
+      </p-iconfield>
+    </div>
+  </ng-template>
+  <ng-template #header>
+    <tr>
+      <th style="width: 3rem">
+        <p-tableHeaderCheckbox />
+      </th>
+      <th pSortableColumn="title" style="min-width: 16rem">
+        Title
+        <p-columnFilter
+          type="text"
+          field="title"
+          display="menu"
+          placeholder="Search by title"
+        ></p-columnFilter>
+      </th>
+      <th pSortableColumn="start" style="min-width: 8rem">
+        Start
+        <p-columnFilter
+          type="date"
+          field="start"
+          display="menu"
+          placeholder="mm/dd/yyyy"
+        ></p-columnFilter>
+      </th>
+      <th pSortableColumn="end" style="min-width: 10rem">
+        End
+        <p-columnFilter
+          type="date"
+          field="end"
+          display="menu"
+          placeholder="mm/dd/yyyy"
+        ></p-columnFilter>
+      </th>
+      <th style="min-width: 16rem">Tags</th>
+      <th pSortableColumn="body" style="min-width: 16rem">
+        Description
+        <p-columnFilter
+          type="text"
+          field="body"
+          display="menu"
+          placeholder="Search by body"
+        ></p-columnFilter>
+      </th>
+      <th pSortableColumn="complete" style="min-width: 12rem">
+        Status
+        <p-columnFilter
+          type="boolean"
+          field="complete"
+          display="menu"
+        ></p-columnFilter>
+      </th>
+      <th style="min-width: 12rem"></th>
+    </tr>
+  </ng-template>
+  <ng-template #body let-task>
+    <tr>
+      <td style="width: 3rem">
+        <p-tableCheckbox [value]="task" />
+      </td>
+      <td style="min-width: 12rem">{{ task.title }}</td>
+      <td>{{ task.start | date: "MMM d y, h:mm a" }}</td>
+      <td>{{ task.end | date: "MMM d y, h:mm a" }}</td>
+      <td>
+        @for (tag of task.tags; track tag) {
+          <p-chip [label]="tag" styleClass="m-1"></p-chip>
+        }
+      </td>
+      <td>{{ task.body }}</td>
+      <td>
+        <p-tag
+          [value]="getStatus(task.complete)"
+          [severity]="getSeverity(task.complete)"
+        />
+      </td>
+      <td>
+        <p-button
+          icon="pi pi-pencil"
+          class="mr-2"
+          [rounded]="true"
+          [outlined]="true"
+          (click)="editTask(task)"
+        />
+        <p-button
+          icon="pi pi-trash"
+          severity="danger"
+          [rounded]="true"
+          [outlined]="true"
+          (click)="deleteOneTask(task)"
+        />
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog
+  [(visible)]="taskDialog"
+  [style]="{ width: '450px' }"
+  header="Task Details"
+  [modal]="true"
+>
+  <ng-template #content>
+    <div class="flex flex-col gap-6">
+      <div>
+        <label for="title" class="block font-bold mb-3">Title</label>
+        <input
+          type="text"
+          pInputText
+          id="title"
+          [(ngModel)]="task.title"
+          required
+          autofocus
+          fluid
+        />
+      </div>
+
+      <div>
+        <label for="tags" class="block font-bold mb-3">Tags</label>
+        <input
+          type="text"
+          pInputText
+          id="tags"
+          class="form-control"
+          [(ngModel)]="task.tags"
+          (change)="formatTags(task)"
+          placeholder="Comma-separated tags"
+          autofocus
+          fluid
+        />
+      </div>
+
+      <div>
+        <label for="description" class="block font-bold mb-3"
+          >Description</label
+        >
+        <textarea
+          id="description"
+          pTextarea
+          [(ngModel)]="task.body"
+          rows="3"
+          cols="20"
+          fluid
+        ></textarea>
+      </div>
+
+      <div>
+        <label for="complete" class="block font-bold mb-3">Task Status</label>
+        <p-select
+          [(ngModel)]="task.complete"
+          inputId="complete"
+          [options]="statuses"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select a Status"
+          fluid
+        />
+      </div>
+
+      <div class="grid grid-cols-12 gap-4">
+        <div class="col-span-6">
+          <label for="start" class="block font-bold mb-3">Start</label>
+          <input
+            id="start"
+            class="form-control"
+            type="text"
+            mwlFlatpickr
+            [(ngModel)]="task.start"
+            [altInput]="true"
+            [convertModelValue]="true"
+            [enableTime]="true"
+            dateFormat="Y-m-dTH:i"
+            altFormat="F j, Y H:i"
+            placeholder="Not set"
+            required
+            fluid
+          />
+        </div>
+        <div class="col-span-6">
+          <label for="end" class="block font-bold mb-3">End</label>
+          <input
+            id="end"
+            class="form-control"
+            type="text"
+            mwlFlatpickr
+            [(ngModel)]="task.end"
+            [altInput]="true"
+            [convertModelValue]="true"
+            [enableTime]="true"
+            dateFormat="Y-m-dTH:i"
+            altFormat="F j, Y H:i"
+            placeholder="Not set"
+            fluid
+          />
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template #footer>
+    <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+    <p-button
+      label="Save"
+      icon="pi pi-check"
+      (click)="createOrUpdateTask(task)"
+    />
+  </ng-template>
+</p-dialog>
+
+<p-confirmdialog [style]="{ width: '450px' }" />
