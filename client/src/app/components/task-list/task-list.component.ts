@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  ElementRef,
   inject,
   OnInit,
   ViewChild
@@ -43,6 +44,7 @@ export class TaskListComponent implements OnInit {
   statuses!: any[];
   cols!: Column[];
   @ViewChild('dt') dt!: Table;
+  @ViewChild('filter') filter!: ElementRef;
   exportColumns!: ExportColumn[];
   refresh$ = new Subject<void>();
 
@@ -314,4 +316,9 @@ export class TaskListComponent implements OnInit {
         return 'STATUS';
     }
   }
+
+  clear(table: Table) {
+    table.clear();
+    this.filter.nativeElement.value = '';
+}
 }
