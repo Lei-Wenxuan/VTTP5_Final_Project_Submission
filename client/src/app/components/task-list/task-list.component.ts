@@ -56,6 +56,7 @@ export class TaskListComponent implements OnInit {
   ngOnInit(): void {
     this.loadEvents();
     this.refresh$.next();
+    this.cdr.detectChanges();
   }
 
   private loadEvents(): void {
@@ -99,6 +100,7 @@ export class TaskListComponent implements OnInit {
       this.updateTask(editedTask);
     }
     this.taskDialog = false;
+    this.refresh$.next();
     this.cdr.detectChanges();
   }
 
@@ -116,6 +118,8 @@ export class TaskListComponent implements OnInit {
     this.task = newTask;
     this.submitted = false;
     this.taskDialog = true;
+    this.refresh$.next();
+    this.cdr.detectChanges();
   }
 
   addTask(newTask: TaskEvent) {
@@ -182,6 +186,8 @@ export class TaskListComponent implements OnInit {
           detail: 'Completed Selected Tasks',
           life: 3000,
         });
+        this.refresh$.next();
+        this.cdr.detectChanges();
       },
     });
   }
@@ -201,6 +207,8 @@ export class TaskListComponent implements OnInit {
         });
       },
     });
+    this.refresh$.next();
+    this.cdr.detectChanges();
   }
 
   deleteSelectedTasks() {
@@ -219,6 +227,8 @@ export class TaskListComponent implements OnInit {
         });
       },
     });
+    this.refresh$.next();
+    this.cdr.detectChanges();
   }
 
   deleteTask(taskToDelete: TaskEvent) {
