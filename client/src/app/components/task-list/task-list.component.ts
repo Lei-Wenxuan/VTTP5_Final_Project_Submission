@@ -186,10 +186,10 @@ export class TaskListComponent implements OnInit {
           detail: 'Completed Selected Tasks',
           life: 3000,
         });
-        this.refresh$.next();
-        this.cdr.detectChanges();
       },
     });
+    this.refresh$.next();
+    this.cdr.detectChanges();
   }
 
   deleteOneTask(task: TaskEvent) {
